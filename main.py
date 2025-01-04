@@ -11,13 +11,30 @@ df = df[['STAID', 'STANAME                                 ']]
 def home():
     return render_template("home.html", data=df.to_html())
 
+@app.route("/api/v1/<station>")
+def all_data(station):
+    filename = "data_small/TG_STAID"+str(station).zfill(6)+".txt"
+    df = pd.read_csv(filename, skiprows=20)
+    df["   TG"] = df["   TG"] / 10
+    df = df[["STAID", "    DATE", "   TG"]]
+    return render_template("station.html", data=df.to_html())
+
+
+@app.route("/api/v1/yearly/<station>/<year>")
+def flex_date(station, year):
+    filename = "data_small/TG_STAID"+str(station).zfill(6)+".txt"
+    df = pd.read_csv(filename, skiprows=20)
+    df['    DATE'] = df['    DATE'].astype(str)
+    df['   TG'] = df['   TG'] / 10
+    df = df.loc[df['    DATE'].str.startswith(year)][['STAID', '    DATE', '   TG']]
+    return render_template("station.html", data=df.to_html())
+
 
 @app.route("/api/v1/<station>/<date>")
 def about(station, date):
     filename = "data_small/TG_STAID"+str(station).zfill(6)+".txt"
     df = pd.read_csv(filename, skiprows=20, parse_dates=["    DATE"])
     temperature = df.loc[df['    DATE'] == date]['   TG'].squeeze() / 10
-    print(temperature)
     return{"station": station,
            "date": date,
            "temperature": temperature}
